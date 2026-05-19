@@ -1,0 +1,70 @@
+UGANDA_DISTRICTS = {
+    "Kampala": {"lat": 0.3136, "lng": 32.5811, "region": "Central", "population": 1680600},
+    "Wakiso": {"lat": 0.4040, "lng": 32.4589, "region": "Central", "population": 2958000},
+    "Mukono": {"lat": 0.3533, "lng": 32.7553, "region": "Central", "population": 596000},
+    "Gulu": {"lat": 2.7725, "lng": 32.2990, "region": "Northern", "population": 436000},
+    "Lira": {"lat": 2.2354, "lng": 32.8897, "region": "Northern", "population": 408000},
+    "Mbale": {"lat": 1.0803, "lng": 34.1750, "region": "Eastern", "population": 568000},
+    "Tororo": {"lat": 0.6930, "lng": 34.1810, "region": "Eastern", "population": 517000},
+    "Jinja": {"lat": 0.4390, "lng": 33.2030, "region": "Eastern", "population": 513000},
+    "Mbarara": {"lat": -0.6057, "lng": 30.6541, "region": "Western", "population": 474000},
+    "Kabale": {"lat": -1.2486, "lng": 29.9899, "region": "Western", "population": 232000},
+    "Fort Portal": {"lat": 0.6710, "lng": 30.2750, "region": "Western", "population": 61000},
+    "Arua": {"lat": 3.0189, "lng": 30.9109, "region": "Northern", "population": 413000},
+    "Soroti": {"lat": 1.7150, "lng": 33.6100, "region": "Eastern", "population": 296000},
+    "Busia": {"lat": 0.4640, "lng": 34.1140, "region": "Eastern", "population": 323000},
+    "Masaka": {"lat": -0.3333, "lng": 31.7333, "region": "Central", "population": 103800},
+    "Hoima": {"lat": 1.4350, "lng": 31.3450, "region": "Western", "population": 200000},
+    "Kasese": {"lat": 0.1833, "lng": 30.0833, "region": "Western", "population": 748000},
+    "Moroto": {"lat": 2.5333, "lng": 34.6667, "region": "Northern", "population": 147000},
+    "Kotido": {"lat": 3.0167, "lng": 34.1167, "region": "Northern", "population": 236000},
+    "Adjumani": {"lat": 3.3781, "lng": 31.7909, "region": "Northern", "population": 225000},
+    "Apac": {"lat": 1.9780, "lng": 32.8880, "region": "Northern", "population": 365000},
+    "Bugiri": {"lat": 0.5710, "lng": 33.7420, "region": "Eastern", "population": 426000},
+    "Bushenyi": {"lat": -0.5360, "lng": 30.1870, "region": "Western", "population": 308000},
+    "Iganga": {"lat": 0.6090, "lng": 33.4680, "region": "Eastern", "population": 547000},
+    "Kalungu": {"lat": -0.1667, "lng": 31.7500, "region": "Central", "population": 183000},
+    "Kamuli": {"lat": 0.9470, "lng": 33.1190, "region": "Eastern", "population": 558000},
+    "Kanungu": {"lat": -0.9570, "lng": 29.7890, "region": "Western", "population": 252000},
+    "Kayunga": {"lat": 0.7020, "lng": 32.8880, "region": "Central", "population": 368000},
+    "Kibaale": {"lat": 0.7830, "lng": 31.0660, "region": "Western", "population": 463000},
+    "Kisoro": {"lat": -1.2850, "lng": 29.6850, "region": "Western", "population": 281000},
+    "Kumi": {"lat": 1.4600, "lng": 33.9300, "region": "Eastern", "population": 255000},
+    "Luwero": {"lat": 0.8500, "lng": 32.5000, "region": "Central", "population": 485000},
+    "Masindi": {"lat": 1.6740, "lng": 31.7150, "region": "Western", "population": 293000},
+    "Mayuge": {"lat": 0.4590, "lng": 33.4800, "region": "Eastern", "population": 473000},
+    "Mityana": {"lat": 0.4000, "lng": 32.0500, "region": "Central", "population": 329000},
+    "Mpigi": {"lat": 0.2250, "lng": 32.3130, "region": "Central", "population": 251000},
+    "Mubende": {"lat": 0.5580, "lng": 31.3950, "region": "Central", "population": 437000},
+    "Nakasongola": {"lat": 1.3080, "lng": 32.4560, "region": "Central", "population": 156000},
+    "Nebbi": {"lat": 2.4780, "lng": 31.0890, "region": "Northern", "population": 396000},
+    "Ntungamo": {"lat": -0.8790, "lng": 30.2640, "region": "Western", "population": 380000},
+    "Pallisa": {"lat": 1.1450, "lng": 33.7090, "region": "Eastern", "population": 387000},
+    "Rakai": {"lat": -0.7200, "lng": 31.4830, "region": "Central", "population": 518000},
+    "Rukungiri": {"lat": -0.8410, "lng": 29.9410, "region": "Western", "population": 308000},
+    "Sembabule": {"lat": 0.0770, "lng": 31.4560, "region": "Central", "population": 184000},
+    "Sironko": {"lat": 1.2300, "lng": 34.2470, "region": "Eastern", "population": 242000},
+    "Yumbe": {"lat": 3.4640, "lng": 31.2460, "region": "Northern", "population": 484000},
+}
+
+REGIONS = {
+    "Central": ["Kampala", "Wakiso", "Mukono", "Masaka", "Kalungu", "Kayunga", "Luwero", "Mityana", "Mpigi", "Mubende", "Nakasongola", "Rakai", "Sembabule"],
+    "Eastern": ["Mbale", "Tororo", "Jinja", "Soroti", "Busia", "Bugiri", "Iganga", "Kamuli", "Kumi", "Mayuge", "Pallisa", "Sironko"],
+    "Northern": ["Gulu", "Lira", "Arua", "Moroto", "Kotido", "Adjumani", "Apac", "Nebbi", "Yumbe"],
+    "Western": ["Mbarara", "Kabale", "Fort Portal", "Hoima", "Kasese", "Bushenyi", "Kanungu", "Kibaale", "Kisoro", "Masindi", "Ntungamo", "Rukungiri"],
+}
+
+UGANDA_GEOJSON = {
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {"name": name, "region": data["region"], "population": data["population"]},
+            "geometry": {
+                "type": "Point",
+                "coordinates": [data["lng"], data["lat"]],
+            },
+        }
+        for name, data in UGANDA_DISTRICTS.items()
+    ],
+}
