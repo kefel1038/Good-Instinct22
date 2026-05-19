@@ -1,7 +1,4 @@
 fastapi
 uvicorn
 pydantic
-pandas
-scikit-learn
-numpy
 python-jose[cryptography]

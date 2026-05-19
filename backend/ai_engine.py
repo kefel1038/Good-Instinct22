@@ -1,84 +1,103 @@
-import numpy as np
+import math
+import statistics
 from collections import Counter, defaultdict
-from sklearn.ensemble import IsolationForest
-from sklearn.linear_model import LogisticRegression
 
 
-_anomaly_model = None
-_risk_model = None
-_model_trained = False
+def _compute_z_score(value, mean, std):
+    if std == 0:
+        return 0
+    return (value - mean) / std
 
 
-def _train_models(cases: list[dict]):
-    global _anomaly_model, _risk_model, _model_trained
+def _anomaly_score(features, history):
+    if len(history) < 5:
+        return 0, False
 
-    if len(cases) < 10:
-        return
+    scores = []
+    for i in range(len(features)):
+        col = [row[i] for row in history]
+        mean = statistics.mean(col)
+        std = statistics.stdev(col) if len(col) > 1 else 0
+        z = abs(_compute_z_score(features[i], mean, std))
+        scores.append(z)
 
-    X = []
-    y = []
-    for c in cases:
-        fever = 1 if c["temperature"] >= 38 else 0
-        has_fever_symptom = 1 if "fever" in c["symptoms"] else 0
-        cough = 1 if "cough" in c["symptoms"] else 0
-        breathing = 1 if "difficulty breathing" in c["symptoms"] or "shortness of breath" in c["symptoms"] else 0
-        symptom_count = len(c["symptoms"])
-        X.append([c["temperature"], fever, has_fever_symptom, cough, breathing, symptom_count])
+    max_z = max(scores) if scores else 0
+    return max_z, max_z > 2.5
 
-        risk = c.get("risk_level", "LOW")
-        y.append(0 if risk == "LOW" else (1 if risk == "MEDIUM_RISK" else 2))
 
-    X = np.array(X)
-    y = np.array(y)
+def _risk_score(features):
+    temp, fever, has_fever, cough, breathing, symptom_count = features
+    score = 0
 
-    _anomaly_model = IsolationForest(contamination=0.2, random_state=42)
-    _anomaly_model.fit(X)
+    if temp >= 40:
+        score += 4
+    elif temp >= 39:
+        score += 3
+    elif temp >= 38:
+        score += 2
+    elif temp >= 37.5:
+        score += 1
 
-    if len(set(y)) >= 2:
-        _risk_model = LogisticRegression(multi_class="auto", max_iter=1000, random_state=42)
-        _risk_model.fit(X, y)
+    if has_fever or fever:
+        score += 2
+    if cough:
+        score += 1
+    if breathing:
+        score += 3
+    score += symptom_count * 0.5
 
-    _model_trained = True
+    return score
 
 
 def detect_anomaly(cases: list[dict]) -> str:
     if len(cases) < 5:
         return "LOW"
 
-    _train_models(cases)
+    history = []
+    for c in cases[:-1]:
+        history.append([
+            c["temperature"],
+            1 if c["temperature"] >= 38 else 0,
+            1 if "fever" in c["symptoms"] else 0,
+            1 if "cough" in c["symptoms"] else 0,
+            1 if "difficulty breathing" in c["symptoms"] or "shortness of breath" in c["symptoms"] else 0,
+            len(c["symptoms"]),
+        ])
+
     last = cases[-1]
+    features = [
+        last["temperature"],
+        1 if last["temperature"] >= 38 else 0,
+        1 if "fever" in last["symptoms"] else 0,
+        1 if "cough" in last["symptoms"] else 0,
+        1 if "difficulty breathing" in last["symptoms"] or "shortness of breath" in last["symptoms"] else 0,
+        len(last["symptoms"]),
+    ]
 
-    fever = 1 if last["temperature"] >= 38 else 0
-    has_fever_symptom = 1 if "fever" in last["symptoms"] else 0
-    cough = 1 if "cough" in last["symptoms"] else 0
-    breathing = 1 if "difficulty breathing" in last["symptoms"] or "shortness of breath" in last["symptoms"] else 0
-    symptom_count = len(last["symptoms"])
+    z, is_anomaly = _anomaly_score(features, history)
+    score = _risk_score(features)
 
-    features = np.array([[last["temperature"], fever, has_fever_symptom, cough, breathing, symptom_count]])
-
-    if _anomaly_model is not None:
-        anomaly_score = _anomaly_model.score_samples(features)[0]
-        anomaly_pred = _anomaly_model.predict(features)[0]
-
-        if anomaly_pred == -1:
-            if _risk_model is not None:
-                risk_pred = _risk_model.predict(features)[0]
-                if risk_pred == 2:
-                    return "HIGH_RISK"
-                elif risk_pred == 1:
-                    return "MEDIUM_RISK"
-
-    fever_cases = sum(1 for c in cases if c["temperature"] >= 38 or "fever" in c["symptoms"])
-    cough_cases = sum(1 for c in cases if "cough" in c["symptoms"])
-    ratio = fever_cases / len(cases)
-    cough_ratio = cough_cases / len(cases)
-
-    if ratio > 0.6 or (ratio > 0.4 and cough_ratio > 0.3):
+    if is_anomaly and score >= 6:
         return "HIGH_RISK"
-    elif ratio > 0.3 or cough_ratio > 0.4:
+    if is_anomaly or score >= 5:
         return "MEDIUM_RISK"
-    else:
-        return "LOW"
+    if score >= 3:
+        return "MEDIUM_RISK"
+
+    fever_ratio = sum(
+        1 for c in cases
+        if c["temperature"] >= 38 or "fever" in c["symptoms"]
+    ) / len(cases)
+    cough_ratio = sum(
+        1 for c in cases if "cough" in c["symptoms"]
+    ) / len(cases)
+
+    if fever_ratio > 0.6 or (fever_ratio > 0.4 and cough_ratio > 0.3):
+        return "HIGH_RISK"
+    if fever_ratio > 0.3 or cough_ratio > 0.4:
+        return "MEDIUM_RISK"
+
+    return "LOW"
 
 
 def get_hotspots(cases: list[dict]) -> list[dict]:
@@ -121,11 +140,13 @@ def get_district_risk(cases: list[dict], districts: dict) -> list[dict]:
     district_cases = defaultdict(list)
     for c in cases:
         loc = c["location"]
-        for dist_name, dist_data in districts.items():
+        matched = False
+        for dist_name in districts:
             if loc.lower() == dist_name.lower() or loc.lower() in dist_name.lower():
                 district_cases[dist_name].append(c)
+                matched = True
                 break
-        else:
+        if not matched:
             district_cases[loc].append(c)
 
     result = []
@@ -164,8 +185,8 @@ def predict_outbreak(cases: list[dict]) -> dict:
 
     counts = [daily[d] for d in sorted(daily.keys())]
     recent = counts[-3:]
-    avg = np.mean(counts[:-3]) if len(counts) > 3 else 1
-    recent_avg = np.mean(recent)
+    avg = statistics.mean(counts[:-3]) if len(counts) > 3 else 1
+    recent_avg = statistics.mean(recent)
 
     if avg == 0:
         avg = 0.5
