@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 import hashlib
+import os
 import secrets
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-SECRET_KEY = "neewrs-uganda-secret-key-2026"
+SECRET_KEY = os.getenv("NEEWRS_SECRET_KEY", "neewrs-uganda-secret-key-2026")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 
