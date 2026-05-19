@@ -16,6 +16,7 @@ from auth import (
     get_current_user,
     hash_password,
     ROLES,
+    seed_users,
 )
 from datetime import datetime
 from collections import defaultdict
@@ -49,8 +50,20 @@ def home():
 
 # ─── AUTH ────────────────────────────────────────────────────────────
 
+@api.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "users_count": len(users_db),
+        "users": list(users_db.keys()),
+        "cases_count": len(cases_db),
+    }
+
+
 @api.post("/auth/login")
 def login(req: LoginRequest):
+    if not users_db:
+        seed_users()
     user = users_db.get(req.username)
     if not user or not verify_password(req.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
