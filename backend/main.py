@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from models import Case, LoginRequest, SMSReport
 from ai_engine import (
@@ -30,12 +30,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+api = APIRouter(prefix="/api")
+
 cases_db = []
 next_id = 1
 sms_log = []
 
 
-@app.get("/")
+@api.get("/")
 def home():
     return {
         "message": "NEEWRS - National Epidemic Early Warning & Response System",
@@ -47,7 +49,7 @@ def home():
 
 # ─── AUTH ────────────────────────────────────────────────────────────
 
-@app.post("/auth/login")
+@api.post("/auth/login")
 def login(req: LoginRequest):
     user = users_db.get(req.username)
     if not user or not verify_password(req.password, user["password"]):
@@ -71,14 +73,14 @@ def login(req: LoginRequest):
     }
 
 
-@app.get("/auth/me")
+@api.get("/auth/me")
 def get_me(current_user: dict = Depends(get_current_user)):
     return current_user
 
 
 # ─── CASE REPORTING ──────────────────────────────────────────────────
 
-@app.post("/report-case")
+@api.post("/report-case")
 def report_case(
     case: Case,
     current_user: dict = Depends(get_current_user),
@@ -103,7 +105,7 @@ def report_case(
     }
 
 
-@app.post("/report-case/public")
+@api.post("/report-case/public")
 def report_case_public(case: Case):
     global next_id
 
@@ -125,12 +127,12 @@ def report_case_public(case: Case):
     }
 
 
-@app.get("/cases")
+@api.get("/cases")
 def get_cases(current_user: dict = Depends(get_current_user)):
     return cases_db
 
 
-@app.get("/my-cases")
+@api.get("/my-cases")
 def get_my_cases(current_user: dict = Depends(get_current_user)):
     name = current_user.get("name", "")
     return [c for c in cases_db if c.get("reported_by") == name]
@@ -138,17 +140,17 @@ def get_my_cases(current_user: dict = Depends(get_current_user)):
 
 # ─── DASHBOARD DATA ─────────────────────────────────────────────────
 
-@app.get("/hotspots")
+@api.get("/hotspots")
 def hotspots(current_user: dict = Depends(get_current_user)):
     return get_hotspots(cases_db)
 
 
-@app.get("/trend")
+@api.get("/trend")
 def trend(current_user: dict = Depends(get_current_user)):
     return get_trend(cases_db)
 
 
-@app.get("/stats")
+@api.get("/stats")
 def stats(current_user: dict = Depends(get_current_user)):
     if not cases_db:
         return {"total": 0, "high_risk": 0, "medium_risk": 0, "low_risk": 0}
@@ -163,27 +165,27 @@ def stats(current_user: dict = Depends(get_current_user)):
 
 # ─── UGANDA DISTRICT DATA ────────────────────────────────────────────
 
-@app.get("/uganda/districts")
+@api.get("/uganda/districts")
 def get_districts(current_user: dict = Depends(get_current_user)):
     return UGANDA_DISTRICTS
 
 
-@app.get("/uganda/regions")
+@api.get("/uganda/regions")
 def get_regions(current_user: dict = Depends(get_current_user)):
     return REGIONS
 
 
-@app.get("/uganda/geojson")
+@api.get("/uganda/geojson")
 def get_geojson(current_user: dict = Depends(get_current_user)):
     return UGANDA_GEOJSON
 
 
-@app.get("/uganda/district-cases")
+@api.get("/uganda/district-cases")
 def district_cases(current_user: dict = Depends(get_current_user)):
     return get_district_risk(cases_db, UGANDA_DISTRICTS)
 
 
-@app.get("/uganda/region-stats")
+@api.get("/uganda/region-stats")
 def region_stats(current_user: dict = Depends(get_current_user)):
     dr = get_district_risk(cases_db, UGANDA_DISTRICTS)
     region_data = defaultdict(lambda: {"total": 0, "high": 0, "medium": 0, "low": 0, "districts": []})
@@ -210,12 +212,12 @@ def region_stats(current_user: dict = Depends(get_current_user)):
 
 # ─── AI / INTELLIGENCE ───────────────────────────────────────────────
 
-@app.get("/ai/predict-outbreak")
+@api.get("/ai/predict-outbreak")
 def outbreak_prediction(current_user: dict = Depends(get_current_user)):
     return predict_outbreak(cases_db)
 
 
-@app.get("/ai/district-risk")
+@api.get("/ai/district-risk")
 def district_risk_analysis(current_user: dict = Depends(get_current_user)):
     dr = get_district_risk(cases_db, UGANDA_DISTRICTS)
     sorted_dr = sorted(dr, key=lambda x: x["risk_score"], reverse=True)
@@ -226,7 +228,7 @@ def district_risk_analysis(current_user: dict = Depends(get_current_user)):
     }
 
 
-@app.get("/ai/overview")
+@api.get("/ai/overview")
 def ai_overview(current_user: dict = Depends(get_current_user)):
     return {
         "outbreak": predict_outbreak(cases_db),
@@ -234,7 +236,7 @@ def ai_overview(current_user: dict = Depends(get_current_user)):
         "stats": {
             "total_cases": len(cases_db),
             "active_hotspots": len(get_hotspots(cases_db)),
-            "ml_model": "Isolation Forest + Logistic Regression",
+            "ml_model": "Z-score anomaly detection + risk scoring",
             "model_trained": len(cases_db) >= 10,
         },
     }
@@ -242,7 +244,7 @@ def ai_overview(current_user: dict = Depends(get_current_user)):
 
 # ─── SMS SIMULATION ──────────────────────────────────────────────────
 
-@app.post("/sms/receive")
+@api.post("/sms/receive")
 def receive_sms(report: SMSReport):
     global next_id
 
@@ -309,14 +311,14 @@ def receive_sms(report: SMSReport):
     }
 
 
-@app.get("/sms/log")
+@api.get("/sms/log")
 def sms_log_endpoint(current_user: dict = Depends(get_current_user)):
     return sms_log
 
 
 # ─── SIMULATE OUTBREAK ──────────────────────────────────────────────
 
-@app.post("/simulate/outbreak")
+@api.post("/simulate/outbreak")
 def simulate_outbreak(
     district: str = Query("Kampala"),
     count: int = Query(10),
@@ -378,7 +380,7 @@ def simulate_outbreak(
 
 # ─── ADMIN ───────────────────────────────────────────────────────────
 
-@app.post("/admin/reset")
+@api.post("/admin/reset")
 def reset_data(current_user: dict = Depends(get_current_user)):
     if current_user.get("role") != "ministry":
         raise HTTPException(status_code=403, detail="Only ministry can reset data")
@@ -387,3 +389,6 @@ def reset_data(current_user: dict = Depends(get_current_user)):
     sms_log = []
     next_id = 1
     return {"status": "reset", "message": "All case data cleared"}
+
+
+app.include_router(api)
