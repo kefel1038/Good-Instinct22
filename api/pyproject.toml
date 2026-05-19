@@ -1,0 +1,11 @@
+[project]
+name = "neewrs-api"
+version = "1.0.0"
+description = "NEEWRS Backend API"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "python-jose[cryptography]",
+]
